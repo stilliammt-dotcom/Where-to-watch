@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yours to Watch</title>
+<meta name="description" content="See only the shows, movies and games your streaming subscriptions actually include.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --sunk:#e3e8f0; --fg:#141a2b; --muted:#5d6782; --line:#d3dae6;
+  --accent:#2446d8; --accent-ink:#ffffff; --accent-soft:#dfe5fd;
+  --ok:#0f7a4f; --ok-soft:#d9f2e6; --warn:#a85a00; --warn-soft:#fbead3; --bad:#b3261e; --bad-soft:#fbe0dd;
+  --font-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:10px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0d1120; --surface:#161b2e; --sunk:#1d2339; --fg:#e8ebf5; --muted:#98a1bd; --line:#2a3150;
+  --accent:#7f98ff; --accent-ink:#0d1120; --accent-soft:#232d5a;
+  --ok:#5fd3a0; --ok-soft:#133528; --warn:#f1b35e; --warn-soft:#3a2a12; --bad:#ff8a80; --bad-soft:#3b1a18; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.brand h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,5vw,40px);letter-spacing:-.02em;line-height:1;margin:0}
+.brand h1 span{color:var(--accent)}
+.brand p{margin:6px 0 0;color:var(--muted);max-width:52ch}
+select{font:500 14px var(--font-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px}
+
+.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;margin-top:14px;border-bottom:1px solid var(--line)}
+.rail-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.chips.wrapped{flex-wrap:wrap;overflow:visible}
+.chip{flex:none;display:inline-flex;align-items:center;gap:7px;font:600 13px var(--font-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer}
+.chip img{width:22px;height:22px;border-radius:6px}
+.chip .dot{width:22px;height:22px;border-radius:6px;background:var(--sunk);display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.more{padding-left:12px}
+.chip:focus-visible,.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.allsvc{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;max-height:50vh;overflow:auto}
+.allsvc input[type=search]{width:100%;margin-bottom:10px}
+.allsvc .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.allsvc label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;min-width:0}
+.allsvc label img{width:22px;height:22px;border-radius:5px;flex:none}
+.allsvc label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+nav.tabs{display:flex;gap:4px;margin-top:18px;background:var(--sunk);padding:4px;border-radius:12px;width:fit-content;max-width:100%;overflow-x:auto}
+.tab{flex:none;font:600 14px var(--font-body);color:var(--muted);background:none;border:0;border-radius:9px;padding:8px 14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tab .n{font-family:var(--font-mono);font-size:11px;margin-left:6px;color:var(--accent)}
+
+section.panel{margin-top:20px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.search{flex:1 1 260px;min-width:0;font:500 15px var(--font-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.count{font-size:14px;color:var(--muted);margin:0 0 12px}
+.count b{color:var(--fg)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:16px}
+@media (max-width:460px){.grid{grid-template-columns:1fr 1fr;gap:12px}}
+.card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-width:0}
+.card.locked .poster img,.card.locked .poster .ph{filter:grayscale(.85) brightness(.8)}
+.poster{position:relative;aspect-ratio:2/3;max-width:100%;background:var(--sunk)}
+.poster img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .ph{position:absolute;inset:0;display:flex;align-items:flex-end;padding:12px;color:#fff;font-family:var(--font-display);font-weight:700;font-size:18px;line-height:1.1}
+.poster .kind{position:absolute;top:8px;left:8px;font:500 10px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;background:rgba(0,0,0,.55);color:#fff;padding:3px 7px;border-radius:5px}
+.save{position:absolute;top:6px;right:6px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:17px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.save[aria-pressed="true"]{background:#fff;color:#141a2b}
+.meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.meta h3{margin:0;font-size:14.5px;font-weight:700;line-height:1.25}
+.meta .yr{font-size:12px;color:var(--muted);font-weight:500}
+.status{font-size:12.5px;font-weight:600;border-radius:6px;padding:4px 8px;width:fit-content;max-width:100%}
+.status.ok{background:var(--ok-soft);color:var(--ok)}
+.status.warn{background:var(--warn-soft);color:var(--warn)}
+.status.wait{background:var(--sunk);color:var(--muted)}
+.watch{margin-top:auto;display:block;text-align:center;font:700 13px var(--font-body);text-decoration:none;color:var(--accent-ink);background:var(--accent);border-radius:8px;padding:8px 10px;border:0;cursor:pointer}
+.watch.alt{background:var(--sunk);color:var(--fg)}
+.more-row{display:flex;justify-content:center;margin-top:20px}
+.more-row .watch{width:auto;padding:10px 22px}
+
+.empty,.notice{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:24px;text-align:center;color:var(--muted)}
+.empty h3,.notice h3{font-family:var(--font-display);color:var(--fg);margin:0 0 6px;font-size:20px}
+.notice{text-align:left;border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--fg);margin-top:16px}
+.notice code{font-family:var(--font-mono);font-size:13px}
+
+h2.sec{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:-.01em;margin:26px 0 4px}
+h2.sec:first-child{margin-top:0}
+p.sub{color:var(--muted);margin:0 0 14px;max-width:65ch}
+
+.leagues{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+@media (max-width:460px){.leagues{grid-template-columns:1fr}}
+.league{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.league-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.league h3{font-family:var(--font-display);font-size:20px;margin:0}
+.cov{font-family:var(--font-mono);font-size:13px;color:var(--muted)}
+.meter{height:6px;background:var(--sunk);border-radius:3px;margin:10px 0 12px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok);border-radius:3px}
+.pkg{display:grid;grid-template-columns:18px 1fr;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
+.pkg .mark{font-weight:700;text-align:center}
+.pkg.yes .mark{color:var(--ok)} .pkg.no .mark{color:var(--muted)}
+.pkg .what{font-weight:600;font-size:14px}
+.pkg .how{grid-column:2;font-size:13px;color:var(--muted)}
+.pkg.no .what{color:var(--muted)}
+
+.unlock{display:flex;flex-direction:column;gap:12px}
+.offer{display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.offer.top{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.offer h3{margin:0;font-family:var(--font-display);font-size:19px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.offer h3 img{width:28px;height:28px;border-radius:7px}
+.badge{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:3px 8px;border-radius:999px}
+.offer .gets{grid-column:1;font-size:14px;color:var(--muted);min-width:0}
+.offer .gets b{color:var(--fg)}
+.price{grid-row:1 / span 2;grid-column:2;text-align:right}
+.price .amt{font-family:var(--font-mono);font-size:18px;display:block}
+.price .per{font-size:12px;color:var(--muted)}
+.price a{display:inline-block;margin-top:6px}
+@media (max-width:460px){.offer{grid-template-columns:1fr}.price{grid-row:auto;grid-column:1;text-align:left}}
+
+.rowlist{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;min-width:0}
+.row .thumb{flex:none;width:40px;height:60px;border-radius:5px;object-fit:cover;background:var(--sunk)}
+.row .info{flex:1;min-width:0}
+.row .t{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .s{font-size:13px;color:var(--muted)}
+.row button.x{flex:none;border:1px solid var(--line);background:none;color:var(--muted);border-radius:8px;padding:6px 10px;font:600 12px var(--font-body);cursor:pointer}
+.row a.watch{margin:0;flex:none}
+
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px;max-width:80ch}
+footer a{color:inherit}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .15s}.card:hover{transform:translateY(-2px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Yours <span>to Watch</span></h1>
+      <p>Only the shows, movies and games your subscriptions actually include. No teasers for things you can't play.</p>
+    </div>
+    <label class="toggle">Country
+      <select id="region" aria-label="Country">
+        <option value="US">United States</option><option value="CA">Canada</option><option value="GB">United Kingdom</option>
+        <option value="AU">Australia</option><option value="IE">Ireland</option><option value="NZ">New Zealand</option>
+        <option value="DE">Germany</option><option value="FR">France</option><option value="ES">Spain</option>
+        <option value="IT">Italy</option><option value="MX">Mexico</option><option value="BR">Brazil</option>
+        <option value="IN">India</option><option value="JP">Japan</option>
+      </select>
+    </label>
+  </header>
+
+  <div id="setup" hidden></div>
+
+  <div class="rail">
+    <div class="rail-head">
+      <span class="label">My services — tap to add or remove</span>
+    </div>
+    <div class="chips" id="svcChips" role="group" aria-label="My streaming services"><span class="count">Loading services…</span></div>
+    <div class="allsvc" id="allSvc" hidden>
+      <input class="search" id="svcFilter" type="search" placeholder="Find a service…" autocomplete="off">
+      <div class="opts" id="svcOpts"></div>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="watch">Watch now</button>
+    <button class="tab" role="tab" data-tab="list">My list<span class="n" id="n-list"></span></button>
+    <button class="tab" role="tab" data-tab="sports">Sports</button>
+    <button class="tab" role="tab" data-tab="unlock">Unlock more</button>
+  </nav>
+
+  <section class="panel" id="panel-watch">
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="Search any show or movie…" autocomplete="off">
+      <select id="kind" aria-label="Type"><option value="tv">Shows</option><option value="movie">Movies</option></select>
+      <select id="genre" aria-label="Genre"><option value="">All genres</option></select>
+      <label class="toggle" id="lockedWrap" hidden><input type="checkbox" id="showLocked"> Also show what I can't watch</label>
+    </div>
+    <p class="count" id="count"></p>
+    <div class="grid" id="grid"></div>
+    <div class="more-row"><button class="watch alt" id="loadMore" hidden>Show more</button></div>
+  </section>
+
+  <section class="panel" id="panel-list" hidden></section>
+
+  <section class="panel" id="panel-sports" hidden>
+    <h2 class="sec">Where your games are</h2>
+    <p class="sub">Pick the leagues you follow and any live TV or sports services you pay for. Broadcast deals are updated by hand, so check before game day.</p>
+    <div class="label" style="margin-bottom:8px">Leagues I follow</div>
+    <div class="chips wrapped" id="leagueChips" role="group" aria-label="Leagues I follow" style="margin-bottom:16px"></div>
+    <div class="label" style="margin-bottom:8px">Live TV &amp; sports services I have</div>
+    <div class="chips wrapped" id="sportSvcChips" role="group" aria-label="Sports services" style="margin-bottom:20px"></div>
+    <div class="leagues" id="leagues"></div>
+  </section>
+
+  <section class="panel" id="panel-unlock" hidden></section>
+
+  <footer>
+    <span>This product uses the TMDB API but is not endorsed or certified by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Where-to-watch data provided by <a href="https://www.justwatch.com/" target="_blank" rel="noopener">JustWatch</a>.</span>
+    <span>Sports broadcast info reflects US deals as of fall 2026 and is updated by hand. Prices are approximate starting prices. Your services and list are saved in this browser only.</span>
+  </footer>
+</div>
+
+<script>
+// ================= config =================
+const LABEL = {netflix:"Netflix",hbomax:"HBO Max",disneyplus:"Disney+",hulu:"Hulu",prime:"Prime Video",appletv:"Apple TV",
+  peacock:"Peacock",paramountplus:"Paramount+",youtubetv:"YouTube TV",espn:"ESPN",foxone:"Fox One",
+  sundayticket:"NFL Sunday Ticket",leaguepass:"NBA League Pass",mlbtv:"MLB.TV"};
+const PRICE = {netflix:7.99,hbomax:10.99,disneyplus:11.99,hulu:11.99,prime:8.99,appletv:12.99,peacock:10.99,paramountplus:7.99,
+  youtubetv:82.99,espn:29.99,foxone:19.99,leaguepass:16.99,mlbtv:29.99};
+const PRICE_NOTE = {sundayticket:"from ~$276/season"};
+const SITE = {
+  netflix:q=>`https://www.netflix.com/search?q=${q}`, disneyplus:q=>`https://www.disneyplus.com/search?q=${q}`,
+  hulu:q=>`https://www.hulu.com/search?q=${q}`, prime:q=>`https://www.amazon.com/s?k=${q}&i=instant-video`,
+  appletv:q=>`https://tv.apple.com/search?term=${q}`, hbomax:()=>`https://www.hbomax.com/`, peacock:()=>`https://www.peacocktv.com/`,
+  paramountplus:()=>`https://www.paramountplus.com/`, youtubetv:()=>`https://tv.youtube.com/`, espn:()=>`https://www.espn.com/watch/`,
+  foxone:()=>`https://www.foxone.com/`, sundayticket:()=>`https://tv.youtube.com/`, leaguepass:()=>`https://www.nba.com/watch/league-pass-stream`,
+  mlbtv:()=>`https://www.mlb.com/tv`,
+};
+const FEATURED = ["netflix","hbomax","disneyplus","hulu","prime","appletv","peacock","paramountplus"];
+const SPORTS_SVCS = ["youtubetv","espn","foxone","sundayticket","leaguepass","mlbtv"];
+const STORES = /^(amazon video|google play movies|fandango at home|vudu|microsoft store|youtube|apple itunes|spectrum on demand|redbox|directv|verizon|plex store|sky store|rakuten tv|chili)$/i;
+const IMG = "https://image.tmdb.org/t/p/";
+
+const LEAGUES = [
+ {id:"nfl",name:"NFL",pk:[["Sunday afternoon games on CBS",["paramountplus","youtubetv"]],["Sunday afternoon games on FOX",["foxone","youtubetv"]],
+   ["Sunday Night Football",["peacock","youtubetv"]],["Monday Night Football",["espn","youtubetv"]],["Thursday Night Football",["prime"]],
+   ["Christmas Day games",["netflix"]],["Out-of-market Sunday games",["sundayticket"]]]},
+ {id:"nba",name:"NBA",pk:[["ESPN & ABC games",["espn","youtubetv"]],["NBC & Peacock games",["peacock","youtubetv"]],["Prime Video games",["prime"]],["Out-of-market games",["leaguepass"]]]},
+ {id:"mlb",name:"MLB",pk:[["Sunday Night Baseball",["peacock","youtubetv"]],["FOX Saturday games",["foxone","youtubetv"]],["TBS games",["hbomax","youtubetv"]],
+   ["Opening Night & Home Run Derby",["netflix"]],["Out-of-market games",["mlbtv"]]]},
+ {id:"cfb",name:"College Football",pk:[["ESPN & ABC games (SEC, ACC, Big 12)",["espn","youtubetv"]],["Big Ten on FOX",["foxone","youtubetv"]],
+   ["Big Ten on NBC & Peacock",["peacock","youtubetv"]],["CBS games",["paramountplus","youtubetv"]]]},
+ {id:"nhl",name:"NHL",pk:[["ESPN games",["espn","youtubetv"]],["TNT games",["hbomax","youtubetv"]]]},
+ {id:"soccer",name:"Soccer",pk:[["Premier League",["peacock","youtubetv"]],["Champions League",["paramountplus"]],["MLS",["appletv"]]]},
+ {id:"f1",name:"Formula 1",pk:[["Every race",["appletv"]]]},
+ {id:"wnba",name:"WNBA",pk:[["ESPN & ABC games",["espn","youtubetv"]],["Prime Video games",["prime"]],["NBC & Peacock games",["peacock","youtubetv"]]]},
+];
+
+// ================= helpers =================
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n=>"$"+n.toFixed(2);
+const joinOr = a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" or "+a[a.length-1];
+function load(k,d){try{const v=localStorage.getItem("ytw."+k);return v?JSON.parse(v):d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem("ytw."+k,JSON.stringify(v))}catch(e){}}
+function hue(str){let h=0;for(const c of String(str))h=(h*31+c.charCodeAt(0))%360;return h}
+const phBg = t=>{const h=hue(t);return `linear-gradient(160deg,hsl(${h} 55% 45%),hsl(${(h+40)%360} 55% 22%))`};
+
+// Group TMDB's many provider variants ("Netflix Standard with Ads", "HBO Max Amazon Channel"...) into one brand.
+function canon(name){
+  let s=String(name).toLowerCase().trim()
+    .replace(/\s+(amazon|apple tv|roku premium|youtube)\s+channels?$/,"")
+    .replace(/\s+(basic\s+|standard\s+)?with ads$/,"")
+    .replace(/\s+premium(\s+plus)?$/,"").trim();
+  if(s.includes("netflix"))return"netflix";
+  if(s==="max"||s.startsWith("hbo max"))return"hbomax";
+  if(s.startsWith("disney"))return"disneyplus";
+  if(s.startsWith("hulu"))return"hulu";
+  if(s.includes("prime video"))return"prime";
+  if(/^apple tv(\+| plus)?$/.test(s))return"appletv";
+  if(s.startsWith("peacock"))return"peacock";
+  if(s.startsWith("paramount"))return"paramountplus";
+  if(s==="youtube tv")return"youtubetv";
+  if(s.startsWith("espn"))return"espn";
+  if(s==="fox one")return"foxone";
+  return s.replace(/[^a-z0-9]+/g,"");
+}
+const labelFor = k=>LABEL[k]||(brands.get(k)?.label)||k;
+
+// ================= API =================
+const cache = new Map();
+async function api(path, params={}){
+  const u=new URL("/api/tmdb",location.origin);
+  u.searchParams.set("path",path);
+  for(const [k,v] of Object.entries(params)) if(v!==""&&v!=null) u.searchParams.set(k,v);
+  const key=u.toString();
+  if(cache.has(key)) return cache.get(key);
+  const p=(async()=>{
+    const r=await fetch(key);
+    let j={}; try{j=await r.json()}catch(e){}
+    if(!r.ok){const err=new Error(j.message||j.status_message||"Request failed");err.code=j.error||r.status;throw err}
+    return j;
+  })();
+  cache.set(key,p);
+  p.catch(()=>cache.delete(key));
+  return p;
+}
+function showSetup(err){
+  const box=$("#setup"); box.hidden=false;
+  box.innerHTML = err.code==="setup"
+    ? `<div class="notice"><h3>Almost there: add your TMDB key</h3>The site is running but doesn't have a TMDB key yet. In Vercel, open your project, go to <b>Settings → Environment Variables</b>, add <code>TMDB_TOKEN</code> with your TMDB "API Read Access Token", then redeploy.</div>`
+    : `<div class="notice"><h3>Couldn't load streaming data</h3>${esc(err.message)}. If this keeps happening, check that your TMDB key is correct.</div>`;
+}
+
+// ================= state =================
+const state = {
+  region: load("region","US"),
+  mine: new Set(load("mine",["netflix","hulu","disneyplus","prime"])),
+  list: load("list",[]),              // [{id,type,title,poster,year}]
+  leagues: new Set(load("leagues",["nfl","nba"])),
+  tab: load("tab","watch"),
+  kind: load("kind","tv"),
+};
+function persist(){save("region",state.region);save("mine",[...state.mine]);save("list",state.list);save("leagues",[...state.leagues]);save("tab",state.tab);save("kind",state.kind)}
+let brands = new Map(); // key -> {key,label,ids:Set,logo,priority}
+
+async function loadBrands(){
+  const [m,t]=await Promise.all([api("/watch/providers/movie",{watch_region:state.region}),api("/watch/providers/tv",{watch_region:state.region})]);
+  const map=new Map();
+  for(const p of [...(m.results||[]),...(t.results||[])]){
+    if(STORES.test(p.provider_name)) continue;
+    const k=canon(p.provider_name);
+    const pr=(p.display_priorities&&p.display_priorities[state.region])??p.display_priority??999;
+    let b=map.get(k);
+    if(!b){b={key:k,label:LABEL[k]||p.provider_name,ids:new Set(),logo:p.logo_path,priority:pr};map.set(k,b)}
+    b.ids.add(p.provider_id);
+    if(pr<b.priority){b.priority=pr;b.logo=p.logo_path;if(!LABEL[k])b.label=p.provider_name}
+  }
+  brands=new Map([...map.values()].sort((a,b)=>a.priority-b.priority).map(b=>[b.key,b]));
+}
+function myProviderIds(){const ids=new Set();for(const k of state.mine){const b=brands.get(k);if(b)b.ids.forEach(i=>ids.add(i))}return [...ids]}
+
+// Per-title availability
+async function providers(type,id){
+  const j=await api(`/${type}/${id}/watch/providers`);
+  return (j.results||{})[state.region]||{};
+}
+function access(pr){
+  const stream=new Map(), free=new Set();
+  for(const p of [...(pr.flatrate||[]),...(pr.free||[]),...(pr.ads||[])]){
+    const k=canon(p.provider_name);
+    if(STORES.test(p.provider_name)) continue;
+    const isFree=(pr.free||[]).includes(p)||((pr.ads||[]).includes(p)&&!LABEL[k]);
+    if(isFree) free.add(k);
+    if(!stream.has(k)) stream.set(k,p);
+  }
+  const keys=[...stream.keys()];
+  const have=keys.filter(k=>state.mine.has(k)||free.has(k));
+  const need=keys.filter(k=>!have.includes(k));
+  const rent=[...new Map([...(pr.rent||[]),...(pr.buy||[])].sort((a,b)=>a.display_priority-b.display_priority).map(p=>[p.provider_name,p])).keys()].slice(0,3);
+  return {ok:have.length>0,have,need,rent,free,link:pr.link};
+}
+function watchUrl(k,title,link){const q=encodeURIComponent(title);return SITE[k]?SITE[k](q):(link||"https://www.themoviedb.org/")}
+
+// ================= services rail =================
+function chipHTML(k,extraClass=""){
+  const b=brands.get(k);
+  const icon=b?.logo?`<img src="${IMG}w92${b.logo}" alt="" loading="lazy">`:`<span class="dot">${esc(labelFor(k)[0])}</span>`;
+  return `<button class="chip ${extraClass}" data-svc="${esc(k)}" aria-pressed="${state.mine.has(k)}">${icon}${esc(labelFor(k))}</button>`;
+}
+function renderChips(){
+  const featured=FEATURED.filter(k=>brands.has(k));
+  const extra=[...state.mine].filter(k=>!featured.includes(k)&&brands.has(k));
+  $("#svcChips").innerHTML=[...featured,...extra].map(k=>chipHTML(k)).join("")+
+    `<button class="chip more" id="moreSvc" aria-expanded="${!$("#allSvc").hidden}">${$("#allSvc").hidden?"+ More services":"Done"}</button>`;
+  renderAllSvc();
+}
+function renderAllSvc(){
+  const f=$("#svcFilter").value.trim().toLowerCase();
+  $("#svcOpts").innerHTML=[...brands.values()].filter(b=>!f||b.label.toLowerCase().includes(f)).slice(0,200).map(b=>
+    `<label><input type="checkbox" data-svc-box="${esc(b.key)}" ${state.mine.has(b.key)?"checked":""}>${b.logo?`<img src="${IMG}w92${b.logo}" alt="" loading="lazy">`:""}<span>${esc(b.label)}</span></label>`).join("");
+}
+function toggleSvc(k){state.mine.has(k)?state.mine.delete(k):state.mine.add(k);persist();onServicesChanged()}
+document.addEventListener("click",e=>{
+  const more=e.target.closest("#moreSvc");
+  if(more){$("#allSvc").hidden=!$("#allSvc").hidden;renderChips();return}
+  const c=e.target.closest("[data-svc]"); if(c){toggleSvc(c.dataset.svc);return}
+  const s=e.target.closest("[data-save]"); if(s){toggleSave(s.dataset.save);return}
+  const g=e.target.closest("[data-go]"); if(g){e.preventDefault();setTab(g.dataset.go);window.scrollTo({top:0});return}
+  const l=e.target.closest("[data-lg]"); if(l){const id=l.dataset.lg;state.leagues.has(id)?state.leagues.delete(id):state.leagues.add(id);persist();renderSports();renderUnlock();return}
+});
+document.addEventListener("change",e=>{const b=e.target.closest("[data-svc-box]");if(b)toggleSvc(b.dataset.svcBox)});
+$("#svcFilter").addEventListener("input",renderAllSvc);
+
+let svcTimer;
+function onServicesChanged(){
+  renderChips(); renderSports();
+  clearTimeout(svcTimer); svcTimer=setTimeout(()=>{refreshWatch();renderList();renderUnlock()},250);
+}
+
+// ================= watch now =================
+let discoverPage=1, lastSearch=null, seq=0;
+const item = (r,type)=>({id:r.id,type:type||r.media_type,title:r.title||r.name,poster:r.poster_path,
+  year:(r.release_date||r.first_air_date||"").slice(0,4)});
+const savedKey = it=>`${it.type}:${it.id}`;
+const isSaved = it=>state.list.some(x=>savedKey(x)===savedKey(it));
+const itemIndex = new Map();
+
+function cardHTML(it,acc){
+  itemIndex.set(savedKey(it),it);
+  const saved=isSaved(it);
+  const poster=it.poster?`<img src="${IMG}w342${it.poster}" alt="" loading="lazy">`:`<div class="ph" style="background:${phBg(it.title)}">${esc(it.title)}</div>`;
+  return `<article class="card${acc&&!acc.ok?" locked":""}" data-card="${esc(savedKey(it))}">
+    <div class="poster">${poster}<span class="kind">${it.type==="tv"?"show":"movie"}</span>
+      <button class="save" data-save="${esc(savedKey(it))}" aria-pressed="${saved}" aria-label="${saved?"Remove from":"Add to"} my list">${saved?"✓":"+"}</button></div>
+    <div class="meta"><h3>${esc(it.title)} ${it.year?`<span class="yr">${it.year}</span>`:""}</h3>${metaHTML(it,acc)}</div></article>`;
+}
+function metaHTML(it,acc){
+  if(!acc) return `<span class="status wait">Checking where it streams…</span>`;
+  if(acc.ok){
+    const k=acc.have.find(x=>state.mine.has(x))||acc.have[0];
+    const note=acc.have.map(x=>acc.free.has(x)?`${labelFor(x)} (free)`:labelFor(x));
+    return `<span class="status ok">On ${esc(note.join(" & "))}</span><a class="watch" href="${esc(watchUrl(k,it.title,acc.link))}" target="_blank" rel="noopener">Watch on ${esc(labelFor(k))}</a>`;
+  }
+  const opts=[]; if(acc.need.length) opts.push("Needs "+joinOr(acc.need.map(labelFor))); if(acc.rent.length) opts.push(acc.need.length?"or rent/buy":"Rent or buy only");
+  const btn=acc.rent.length?`<a class="watch alt" href="${esc(acc.link||"#")}" target="_blank" rel="noopener">Rent or buy</a>`
+    :acc.need.length?`<a class="watch alt" href="#unlock" data-go="unlock">How to get it</a>`:"";
+  return `<span class="status warn">${esc(opts.join(" · ")||"Not streaming here right now")}</span>${btn}`;
+}
+async function hydrate(items,fn){
+  let i=0; const my=seq;
+  const worker=async()=>{while(i<items.length&&my===seq){const it=items[i++];try{fn(it,access(await providers(it.type,it.id)))}catch(e){fn(it,{ok:false,have:[],need:[],rent:[],free:new Set()})}}};
+  await Promise.all(Array.from({length:6},worker));
+}
+function fillCard(it,acc){
+  document.querySelectorAll(`[data-card="${CSS.escape(savedKey(it))}"]`).forEach(c=>{
+    c.classList.toggle("locked",!acc.ok); c.querySelector(".meta").innerHTML=`<h3>${esc(it.title)} ${it.year?`<span class="yr">${it.year}</span>`:""}</h3>${metaHTML(it,acc)}`;
+  });
+}
+
+async function loadGenres(){
+  try{const j=await api(`/genre/${state.kind}/list`,{language:"en-US"});
+    const cur=$("#genre").value;
+    $("#genre").innerHTML=`<option value="">All genres</option>`+(j.genres||[]).map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join("");
+    if([...$("#genre").options].some(o=>o.value===cur)) $("#genre").value=cur;
+  }catch(e){}
+}
+
+async function discover(append){
+  const my=++seq;
+  const ids=myProviderIds();
+  $("#lockedWrap").hidden=true;
+  if(!ids.length){$("#grid").innerHTML=`<div class="empty" style="grid-column:1/-1"><h3>Add a service to start</h3>Tap the services you pay for above and your library fills in here.</div>`;$("#count").textContent="";$("#loadMore").hidden=true;return}
+  if(!append){discoverPage=1;$("#grid").innerHTML="";$("#count").textContent="Loading your library…"}
+  try{
+    const j=await api(`/discover/${state.kind}`,{watch_region:state.region,with_watch_providers:ids.join("|"),
+      with_watch_monetization_types:"flatrate|free|ads",sort_by:"popularity.desc",page:discoverPage,with_genres:$("#genre").value,include_adult:"false",language:"en-US"});
+    if(my!==seq) return;
+    const items=(j.results||[]).map(r=>item(r,state.kind));
+    $("#count").innerHTML=`<b>${(j.total_results||0).toLocaleString()}</b> ${state.kind==="tv"?"shows":"movies"} on your services, most popular first`;
+    $("#grid").insertAdjacentHTML("beforeend",items.map(it=>cardHTML(it,null)).join(""));
+    if(!items.length&&!append) $("#grid").innerHTML=`<div class="empty" style="grid-column:1/-1"><h3>Nothing here yet</h3>Try another genre.</div>`;
+    $("#loadMore").hidden=discoverPage>=(j.total_pages||1)||discoverPage>=20;
+    hydrate(items,fillCard);
+  }catch(e){if(my===seq){$("#count").textContent="";showSetup(e)}}
+}
+
+let lastResults=[];
+async function search(q){
+  const my=++seq;
+  $("#loadMore").hidden=true;
+  $("#count").textContent="Searching…"; $("#grid").innerHTML="";
+  try{
+    const j=await api("/search/multi",{query:q,include_adult:"false",language:"en-US"});
+    if(my!==seq) return;
+    const items=(j.results||[]).filter(r=>r.media_type==="movie"||r.media_type==="tv").slice(0,20).map(r=>item(r));
+    const accs=new Map();
+    await hydrate(items,(it,acc)=>accs.set(savedKey(it),acc));
+    if(my!==seq) return;
+    lastResults=items.map(it=>({it,acc:accs.get(savedKey(it))}));
+    renderSearch();
+  }catch(e){if(my===seq){$("#count").textContent="";showSetup(e)}}
+}
+function renderSearch(){
+  const ok=lastResults.filter(x=>x.acc.ok), locked=lastResults.filter(x=>!x.acc.ok);
+  const show=$("#showLocked").checked?[...ok,...locked]:ok;
+  $("#lockedWrap").hidden=!locked.length;
+  $("#count").innerHTML=`<b>${ok.length}</b> on your services${locked.length?` · ${locked.length} hidden because your services don't include ${locked.length===1?"it":"them"}`:""}`;
+  $("#grid").innerHTML=show.length?show.map(x=>cardHTML(x.it,x.acc)).join(""):
+    `<div class="empty" style="grid-column:1/-1"><h3>None of your services have this</h3>${locked.length?`${locked.length} match${locked.length===1?"es":""} elsewhere. <button class="linkbtn" id="revealLocked">Show ${locked.length===1?"it":"them"}</button>`:"Try a different title."}</div>`;
+}
+document.addEventListener("click",e=>{if(e.target.id==="revealLocked"){$("#showLocked").checked=true;renderSearch()}});
+$("#showLocked").addEventListener("change",renderSearch);
+
+function refreshWatch(){const q=$("#q").value.trim();q?search(q):discover(false)}
+let qTimer;
+$("#q").addEventListener("input",()=>{clearTimeout(qTimer);qTimer=setTimeout(refreshWatch,350)});
+$("#kind").addEventListener("change",async()=>{state.kind=$("#kind").value;persist();await loadGenres();if(!$("#q").value.trim())discover(false)});
+$("#genre").addEventListener("change",()=>{if(!$("#q").value.trim())discover(false)});
+$("#loadMore").addEventListener("click",()=>{discoverPage++;discover(true)});
+
+// ================= my list =================
+function toggleSave(key){
+  const i=state.list.findIndex(x=>savedKey(x)===key);
+  if(i>=0) state.list.splice(i,1); else {const it=itemIndex.get(key); if(it) state.list.unshift(it)}
+  persist();
+  document.querySelectorAll(`[data-save="${CSS.escape(key)}"].save`).forEach(b=>{const on=i<0;b.setAttribute("aria-pressed",on);b.textContent=on?"✓":"+"});
+  renderList(); renderUnlock();
+}
+let listSeq=0;
+async function renderList(){
+  const my=++listSeq, items=state.list;
+  $("#n-list").textContent=items.length||"";
+  if(!items.length){$("#panel-list").innerHTML=`<div class="empty"><h3>Your list is empty</h3>Tap + on any show or movie to save it here.</div>`;return}
+  const accs=await Promise.all(items.map(it=>providers(it.type,it.id).then(access).catch(()=>null)));
+  if(my!==listSeq) return;
+  const rows=items.map((it,i)=>({it,acc:accs[i]||{ok:false,have:[],need:[],rent:[],free:new Set()}}));
+  const ready=rows.filter(r=>r.acc.ok), not=rows.filter(r=>!r.acc.ok);
+  const row=({it,acc})=>{
+    const k=acc.have.find(x=>state.mine.has(x))||acc.have[0];
+    const sub=acc.ok?`On ${acc.have.map(labelFor).join(" & ")}`:[acc.need.length?"Needs "+joinOr(acc.need.map(labelFor)):"",acc.rent.length?`${acc.need.length?"or ":""}rent on ${acc.rent.join(", ")}`:""].filter(Boolean).join(" ")||"Not streaming here right now";
+    const thumb=it.poster?`<img class="thumb" src="${IMG}w92${it.poster}" alt="">`:`<span class="thumb" style="background:${phBg(it.title)}"></span>`;
+    return `<div class="row">${thumb}<div class="info"><div class="t">${esc(it.title)}</div><div class="s">${esc(sub)}</div></div>${acc.ok?`<a class="watch" href="${esc(watchUrl(k,it.title,acc.link))}" target="_blank" rel="noopener">Watch</a>`:""}<button class="x" data-save="${esc(savedKey(it))}">Remove</button></div>`;
+  };
+  $("#panel-list").innerHTML=`<h2 class="sec">Ready to watch</h2><p class="sub">${ready.length?`${ready.length} of ${items.length} saved titles are on services you have.`:"None of your saved titles are on your services yet."}</p>
+    <div class="rowlist">${ready.map(row).join("")}</div>
+    ${not.length?`<h2 class="sec">Not on your services</h2><p class="sub">These need another subscription or a rental. <a href="#unlock" data-go="unlock">See the cheapest way to get them</a>.</p><div class="rowlist">${not.map(row).join("")}</div>`:""}`;
+}
+
+// ================= sports =================
+function renderSports(){
+  const us=state.region==="US";
+  $("#leagueChips").innerHTML=LEAGUES.map(l=>`<button class="chip more" data-lg="${l.id}" aria-pressed="${state.leagues.has(l.id)}">${esc(l.name)}</button>`).join("");
+  $("#sportSvcChips").innerHTML=SPORTS_SVCS.map(k=>`<button class="chip more" data-svc="${k}" aria-pressed="${state.mine.has(k)}">${esc(LABEL[k])}</button>`).join("");
+  if(!us){$("#leagues").innerHTML=`<div class="empty" style="grid-column:1/-1"><h3>Sports is US-only for now</h3>Broadcast deals differ by country. Switch the country to United States to see this tab.</div>`;return}
+  const chosen=LEAGUES.filter(l=>state.leagues.has(l.id));
+  if(!chosen.length){$("#leagues").innerHTML=`<div class="empty" style="grid-column:1/-1"><h3>Pick a league</h3>Choose the sports you follow to see which games your services cover.</div>`;return}
+  $("#leagues").innerHTML=chosen.map(l=>{
+    const rows=l.pk.map(([what,svc])=>({what,svc,have:svc.filter(s=>state.mine.has(s))}));
+    const n=rows.filter(r=>r.have.length).length;
+    return `<div class="league"><div class="league-head"><h3>${esc(l.name)}</h3><span class="cov">${n}/${rows.length} covered</span></div>
+      <div class="meter"><i style="width:${Math.round(n/rows.length*100)}%"></i></div>
+      ${rows.map(r=>r.have.length
+        ?`<div class="pkg yes"><span class="mark">✓</span><span class="what">${esc(r.what)}</span><span class="how">With your ${esc(r.have.map(labelFor).join(" or "))}</span></div>`
+        :`<div class="pkg no"><span class="mark">–</span><span class="what">${esc(r.what)}</span><span class="how">Needs ${esc(joinOr(r.svc.map(labelFor)))}</span></div>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+// ================= unlock =================
+let unlockSeq=0;
+async function renderUnlock(){
+  const my=++unlockSeq;
+  const accs=await Promise.all(state.list.map(it=>providers(it.type,it.id).then(access).catch(()=>null)));
+  if(my!==unlockSeq) return;
+  const missing=state.list.map((it,i)=>({it,acc:accs[i]})).filter(x=>x.acc&&!x.acc.ok);
+  const gaps=state.region!=="US"?[]:LEAGUES.filter(l=>state.leagues.has(l.id)).flatMap(l=>l.pk.filter(([,svc])=>!svc.some(s=>state.mine.has(s))).map(([what,svc])=>({what:l.name+": "+what,svc})));
+  const tally=new Map();
+  const add=(k)=>{if(!tally.has(k))tally.set(k,{k,titles:[],games:[]});return tally.get(k)};
+  missing.forEach(({it,acc})=>acc.need.forEach(k=>add(k).titles.push(it.title)));
+  gaps.forEach(g=>g.svc.forEach(k=>add(k).games.push(g.what)));
+  const offers=[...tally.values()].filter(o=>!state.mine.has(o.k)).map(o=>({...o,score:(o.titles.length*3+o.games.length*2)/(PRICE[o.k]||25)})).sort((a,b)=>b.score-a.score);
+  const rentals=missing.filter(x=>x.acc.rent.length);
+
+  let html=`<h2 class="sec">Worth adding</h2><p class="sub">Ranked by how much of your list and your sports each service would unlock. It's the cheapest path to what you've said you want, not a sales pitch.</p>`;
+  if(!state.list.length&&!gaps.length) html+=`<div class="empty"><h3>Nothing to unlock yet</h3>Save titles to your list or pick leagues on the Sports tab, and this page shows what would get you the rest.</div>`;
+  else if(!offers.length) html+=`<div class="empty"><h3>You're covered</h3>Everything on your list and every game you follow is on a service you already have.</div>`;
+  else html+=`<div class="unlock">${offers.slice(0,8).map((o,i)=>{
+    const b=brands.get(o.k), parts=[];
+    if(o.titles.length) parts.push(`<b>${o.titles.length}</b> from your list (${esc(o.titles.join(", "))})`);
+    if(o.games.length) parts.push(`<b>${o.games.length}</b> sports broadcast${o.games.length>1?"s":""} (${esc(o.games.join("; "))})`);
+    const price=PRICE[o.k]?`<span class="amt">${money(PRICE[o.k])}</span><span class="per">approx. from, per month</span>`:PRICE_NOTE[o.k]?`<span class="per">${esc(PRICE_NOTE[o.k])}</span>`:"";
+    return `<div class="offer${i===0?" top":""}"><h3>${b?.logo?`<img src="${IMG}w92${b.logo}" alt="">`:""}${esc(labelFor(o.k))}${i===0?`<span class="badge">Best value</span>`:""}</h3>
+      <div class="gets">Unlocks ${parts.join(" and ")}.</div>
+      <div class="price">${price}<br><a class="watch alt" href="${esc(watchUrl(o.k,"",null))}" target="_blank" rel="noopener">Get ${esc(labelFor(o.k))}</a></div></div>`;
+  }).join("")}</div>`;
+  if(rentals.length) html+=`<h2 class="sec">Or just rent it</h2><p class="sub">Often cheaper than a month of a new service if you only want one movie.</p><div class="rowlist">${rentals.map(({it,acc})=>`<div class="row">${it.poster?`<img class="thumb" src="${IMG}w92${it.poster}" alt="">`:`<span class="thumb" style="background:${phBg(it.title)}"></span>`}<div class="info"><div class="t">${esc(it.title)}</div><div class="s">Rent or buy on ${esc(acc.rent.join(", "))}</div></div><a class="watch alt" href="${esc(acc.link||"#")}" target="_blank" rel="noopener">See prices</a></div>`).join("")}</div>`;
+  $("#panel-unlock").innerHTML=html;
+}
+
+// ================= tabs & boot =================
+const TABS=["watch","list","sports","unlock"];
+function setTab(t){state.tab=t;persist();document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));TABS.forEach(p=>$("#panel-"+p).hidden=p!==t)}
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(b)setTab(b.dataset.tab)});
+
+$("#region").addEventListener("change",async()=>{state.region=$("#region").value;persist();cache.clear();await boot()});
+
+async function boot(){
+  $("#region").value=state.region; $("#kind").value=state.kind;
+  const h=location.hash.slice(1); setTab(TABS.includes(h)?h:state.tab);
+  renderSports();
+  try{ await loadBrands(); $("#setup").hidden=true; }
+  catch(e){ showSetup(e); $("#svcChips").innerHTML=""; return; }
+  renderChips(); loadGenres(); refreshWatch(); renderList(); renderUnlock();
+}
+boot();
+</script>
+</body>
+</html>
